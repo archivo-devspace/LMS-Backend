@@ -9,6 +9,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from './users/users.module';
+import { PostModule } from './post/post.module';
+import { CategoryModule } from './category/category.module';
+
 
 @Module({
   imports: [
@@ -21,6 +24,8 @@ import { UsersModule } from './users/users.module';
      JwtModule.register({
       global: true
     }),
+     PostModule,
+     CategoryModule,
  
   ],
   controllers: [AppController],

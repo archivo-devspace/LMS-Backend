@@ -79,32 +79,49 @@ model Category {
 }
 
 model Post {
-    id            Int           @id @default(autoincrement())
-    title         String
-    content       String
+    id            Int               @id @default(autoincrement())
     categoryId    Int
-    category      Category      @relation(fields: [categoryId], references: [id])
+    category      Category          @relation(fields: [categoryId], references: [id])
     authorId      Int
-    author        User          @relation(fields: [authorId], references: [id])
+    author        User              @relation(fields: [authorId], references: [id])
     comments      Comment[]
     postHistories PostHistory[]
-    createdAt     DateTime      @default(now())
-    updatedAt     DateTime      @updatedAt
-    status        Status        @default(ACTIVE)
+    translations  PostTranslation[]
+    createdAt     DateTime          @default(now())
+    updatedAt     DateTime          @updatedAt
+    status        Status            @default(ACTIVE)
 }
 
 model PostHistory {
-    id         Int      @id @default(autoincrement())
-    postId     Int
-    post       Post     @relation(fields: [postId], references: [id])
-    title      String
-    content    String
-    categoryId Int
-    category   Category @relation(fields: [categoryId], references: [id])
-    authorId   Int
-    author     User     @relation(fields: [authorId], references: [id])
+    id           Int                      @id @default(autoincrement())
+    postId       Int
+    post         Post                     @relation(fields: [postId], references: [id])
+    categoryId   Int
+    category     Category                 @relation(fields: [categoryId], references: [id])
+    authorId     Int
+    author       User                     @relation(fields: [authorId], references: [id])
+    translations PostHistoryTranslation[]
+    createdAt    DateTime                 @default(now())
+}
 
-    createdAt DateTime @default(now())
+model PostTranslation {
+    postId   Int
+    post     Post   @relation(fields: [postId], references: [id])
+    language String
+    title    String
+    content  String
+
+    @@id([postId, language])
+}
+
+model PostHistoryTranslation {
+    postHistoryId Int
+    postHistory   PostHistory @relation(fields: [postHistoryId], references: [id])
+    language      String
+    title         String
+    content       String
+
+    @@id([postHistoryId, language])
 }
 
 model Course {
