@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  HttpException,
+  HttpStatus,
+  Request,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { PostService } from './post.service';
-import { CreatePostDto } from './dto/create-post.dto';
+import { AddTranslationDto, CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -10,15 +23,27 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Post()
-  async create(@Body() createPostDto: CreatePostDto) {
+  async create(@Body() createPostDto: CreatePostDto, @Request() req: Request) {
+    const userId = req['user'].sub;
     try {
-      return await this.postService.create(createPostDto);
+      return await this.postService.create(createPostDto, userId);
     } catch (error) {
       if (error.message.includes('Category with id')) {
         throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
-      throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
+
+  @Post(':postId/translation')
+  async addTranslation(
+    @Param('postId', ParseIntPipe) postId: number,
+    @Body() addTranslationDto: AddTranslationDto,
+  ) {
+    return await this.postService.addTranslation(postId, addTranslationDto);
   }
 
   // @Get()

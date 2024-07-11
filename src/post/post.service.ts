@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePostDto } from './dto/create-post.dto';
+import { AddTranslationDto, CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
@@ -34,8 +38,8 @@ export class PostService {
   //   return post;
   // }
 
-  async create(createPostDto: CreatePostDto) {
-    const { language, title, content, categoryId, authorId } = createPostDto;
+  async create(createPostDto: CreatePostDto, userId: number) {
+    const { language, title, content, categoryId } = createPostDto;
 
     // Ensure the category exists
     const category = await this.prisma.category.findUnique({
@@ -50,7 +54,7 @@ export class PostService {
     const post = await this.prisma.post.create({
       data: {
         categoryId,
-        authorId,
+        authorId: userId,
         translations: {
           create: {
             language,
@@ -67,6 +71,47 @@ export class PostService {
     return post;
   }
 
+  async addTranslation(postId: number, addTranslationDto: AddTranslationDto) {
+    const { language, title, content } = addTranslationDto;
+
+    const post = await this.prisma.post.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with id  ${postId} does not exist`);
+    }
+
+    const existingTranslation = await this.prisma.postTranslation.findUnique({
+      where: {
+        postId_language: {
+          postId,
+          language,
+        },
+      },
+    });
+
+    if (existingTranslation) {
+      throw new ConflictException(
+        `Translation for language ${language} already exists for post with id ${postId}`,
+      );
+    }
+
+    const translation = await this.prisma.postTranslation.create({
+      data: {
+        postId,
+        language,
+        title,
+        content,
+      },
+    });
+
+    await this.createPostHistory(postId, language, title, content);
+
+    return translation;
+  }
 
   // async findAll(language: string) {
   //   return this.prisma.post.findMany({
@@ -157,12 +202,20 @@ export class PostService {
   //   });
   // }
 
-  private async createPostHistory(postId: number, language: string, title: string, content: string) {
+  private async createPostHistory(
+    postId: number,
+    language: string,
+    title: string,
+    content: string,
+  ) {
     await this.prisma.postHistory.create({
       data: {
         postId,
-        categoryId: (await this.prisma.post.findUnique({ where: { id: postId } })).categoryId,
-        authorId: (await this.prisma.post.findUnique({ where: { id: postId } })).authorId,
+        categoryId: (
+          await this.prisma.post.findUnique({ where: { id: postId } })
+        ).categoryId,
+        authorId: (await this.prisma.post.findUnique({ where: { id: postId } }))
+          .authorId,
         translations: {
           create: {
             language,

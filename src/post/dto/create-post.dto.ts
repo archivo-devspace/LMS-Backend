@@ -40,9 +40,19 @@ export class CreatePostDto {
   categoryId: number;
 
   @ApiProperty()
-  @IsInt()
-  authorId: number;
+  @IsString()
+  language: string;
 
+  @ApiProperty()
+  @IsString()
+  title: string;
+
+  @ApiProperty()
+  @IsString()
+  content: string;
+}
+
+export class AddTranslationDto {
   @ApiProperty()
   @IsString()
   language: string;
