@@ -38,6 +38,12 @@ async function bootstrap() {
     customSiteTitle: 'Api Config',
   });
 
-  await app.listen(3000);
+ try {
+    await app.listen(3000);
+    console.log('Connection established');
+  } catch (error) {
+    console.log('Connection failed', error);
+  }
+  
 }
 bootstrap();

@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, LoginUserDto } from './dto/create-user.dto';
+import {
+  CreateUserDto,
+  LoginUserDto,
+  RefreshTokenDto,
+} from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/auth.guard';
@@ -16,7 +29,7 @@ export class UsersController {
     const response = await this.usersService.register(createUserDto);
     return {
       response,
-    }
+    };
   }
 
   @Public()
@@ -25,9 +38,14 @@ export class UsersController {
     const response = await this.usersService.login(loginUserDto);
     return {
       response,
-    }
+    };
   }
 
+  @Public()
+  @Post('refresh-token')
+  async refreshToken(@Body() refreshToken: RefreshTokenDto) {
+    return this.usersService.refreshToken(refreshToken);
+  }
 
   @Get('userProfile')
   async getUserProfile(@Request() req: Request) {
@@ -35,7 +53,6 @@ export class UsersController {
     const user = await this.usersService.findUserById(userId);
     return {
       user,
-    }
+    };
   }
-
 }

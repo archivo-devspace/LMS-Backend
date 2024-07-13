@@ -67,3 +67,11 @@ export class CheckUserEmailDto {
   email: string;
 }
 
+
+export class RefreshTokenDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty({ message: 'Refresh token is required' })
+  refreshToken: string;
+}
+

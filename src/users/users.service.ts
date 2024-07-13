@@ -1,21 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto, LoginUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CreateUserDto, LoginUserDto, RefreshTokenDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
-    const { email, firstName, lastName, password, confirmPassword, role } =
-      createUserDto;
+    const { email, firstName, lastName, password, confirmPassword, role } = createUserDto;
 
     const alreadyRegistered = await this.prisma.user.findUnique({
       where: {
@@ -43,33 +43,7 @@ export class UsersService {
       },
     });
 
-    const accessToken = this.jwtService.sign(
-      {
-        sub: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-      {
-        secret: process.env.ACCESS_TOKEN_SECRET,
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
-      },
-    );
-
-    const refreshToken = this.jwtService.sign(
-      {
-        sub: user.id,
-      },
-      {
-        secret: process.env.REFRESH_TOKEN_SECRET,
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
-      },
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-    };
+    return this.generateTokens(user);
   }
 
   async login(loginUserDto: LoginUserDto) {
@@ -91,6 +65,30 @@ export class UsersService {
       throw new BadRequestException('Password is incorrect!');
     }
 
+    return this.generateTokens(user);
+  }
+
+  async refreshToken(refreshToken: RefreshTokenDto) {
+    try {
+      const payload = this.jwtService.verify(refreshToken.refreshToken, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      return this.generateTokens(user);
+    } catch (e) {
+      throw new UnauthorizedException();
+    }
+  }
+
+  private async generateTokens(user: any) {
     const accessToken = this.jwtService.sign(
       {
         sub: user.id,
@@ -99,8 +97,8 @@ export class UsersService {
         lastName: user.lastName,
       },
       {
-        secret: process.env.ACCESS_TOKEN_SECRET,
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE_IN'),
       },
     );
 
@@ -109,8 +107,8 @@ export class UsersService {
         sub: user.id,
       },
       {
-        secret: process.env.REFRESH_TOKEN_SECRET,
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE_IN'),
       },
     );
 
@@ -120,7 +118,7 @@ export class UsersService {
     };
   }
 
-  async findUserById(id: number) : Promise<UserProfileDto> {
+  async findUserById(id: number): Promise<UserProfileDto> {
     const user = await this.prisma.user.findUnique({
       where: {
         id,
@@ -138,6 +136,4 @@ export class UsersService {
     });
     return user as UserProfileDto;
   }
-
-  
 }
