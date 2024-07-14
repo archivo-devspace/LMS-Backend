@@ -6,6 +6,15 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 const jwtTokenName = 'jwt';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? process.env.PRODUCTION_UTL
+        : ['http://localhost:3000', 'http://localhost:3001'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Allow cookies to be sent
+  });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
@@ -38,12 +47,11 @@ async function bootstrap() {
     customSiteTitle: 'Api Config',
   });
 
- try {
+  try {
     await app.listen(3000);
     console.log('Connection established');
   } catch (error) {
     console.log('Connection failed', error);
   }
-  
 }
 bootstrap();

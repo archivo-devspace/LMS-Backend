@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Request,
+  Res,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -17,6 +18,8 @@ import {
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/auth.guard';
+import { Response } from 'express';
+
 
 @ApiTags('users')
 @Controller('users')
@@ -25,8 +28,8 @@ export class UsersController {
 
   @Public()
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    const response = await this.usersService.register(createUserDto);
+  async register(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
+    const response = await this.usersService.register(createUserDto, res);
     return {
       response,
     };
@@ -34,8 +37,8 @@ export class UsersController {
 
   @Public()
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
-    const response = await this.usersService.login(loginUserDto);
+  async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
+    const response = await this.usersService.login(loginUserDto, res);
     return {
       response,
     };
@@ -43,8 +46,11 @@ export class UsersController {
 
   @Public()
   @Post('refresh-token')
-  async refreshToken(@Body() refreshToken: RefreshTokenDto) {
-    return this.usersService.refreshToken(refreshToken);
+  async refreshToken(@Body() refreshToken: RefreshTokenDto, @Res() res: Response) {
+    const response = await this.usersService.refreshToken(refreshToken, res);
+    return {
+      response,
+    };
   }
 
   @Get('userProfile')

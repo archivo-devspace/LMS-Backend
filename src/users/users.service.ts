@@ -1,11 +1,19 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto, LoginUserDto, RefreshTokenDto } from './dto/create-user.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  CreateUserDto,
+  LoginUserDto,
+  RefreshTokenDto,
+} from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { ConfigService } from '@nestjs/config';
-
+import { Response } from 'express';
 @Injectable()
 export class UsersService {
   constructor(
@@ -14,8 +22,9 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) {}
 
-  async register(createUserDto: CreateUserDto) {
-    const { email, firstName, lastName, password, confirmPassword, role } = createUserDto;
+  async register(createUserDto: CreateUserDto, res: Response) {
+    const { email, firstName, lastName, password, confirmPassword, role } =
+      createUserDto;
 
     const alreadyRegistered = await this.prisma.user.findUnique({
       where: {
@@ -43,10 +52,12 @@ export class UsersService {
       },
     });
 
-    return this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
+
+    this.setTokensAndSendResponse(tokens, res);
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto, res: Response) {
     const { email, password } = loginUserDto;
 
     const user = await this.prisma.user.findUnique({
@@ -65,10 +76,12 @@ export class UsersService {
       throw new BadRequestException('Password is incorrect!');
     }
 
-    return this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
+
+    this.setTokensAndSendResponse(tokens, res);
   }
 
-  async refreshToken(refreshToken: RefreshTokenDto) {
+  async refreshToken(refreshToken: RefreshTokenDto, res: Response) {
     try {
       const payload = this.jwtService.verify(refreshToken.refreshToken, {
         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
@@ -82,7 +95,9 @@ export class UsersService {
         throw new UnauthorizedException();
       }
 
-      return this.generateTokens(user);
+      const tokens = await this.generateTokens(user);
+
+      this.setTokensAndSendResponse(tokens, res);
     } catch (e) {
       throw new UnauthorizedException();
     }
@@ -116,6 +131,20 @@ export class UsersService {
       accessToken,
       refreshToken,
     };
+  }
+
+  private setTokensAndSendResponse(
+    tokens: { accessToken: string; refreshToken: string },
+    res: Response,
+  ) {
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: true, // Only use HTTPS in production
+      sameSite: 'none', // CSRF protection
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    res.json({ accessToken: tokens.accessToken });
   }
 
   async findUserById(id: number): Promise<UserProfileDto> {
