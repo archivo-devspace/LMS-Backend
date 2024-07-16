@@ -103,13 +103,14 @@ export class UsersService {
     }
   }
 
-  private async generateTokens(user: any) {
+  private async generateTokens(user: UserProfileDto) {
     const accessToken = this.jwtService.sign(
       {
         sub: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role : user.role
       },
       {
         secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),

@@ -1,9 +1,11 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   SetMetadata,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
@@ -42,6 +44,19 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException();
     }
+
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (requiredRoles) {
+      const userRole = request['user'].role;
+      if (!requiredRoles.includes(userRole)) {
+        throw new ForbiddenException('You do not have permission to perform this action.');
+      }
+    }
+
     return true;
   }
 
@@ -53,3 +68,6 @@ export class AuthGuard implements CanActivate {
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles:string[]) => SetMetadata(ROLES_KEY, roles);
