@@ -35,7 +35,6 @@ CREATE TABLE "UserHistory" (
     "role" "Role" NOT NULL,
     "firstName" TEXT,
     "lastName" TEXT,
-    "accountHolderName" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "UserHistory_pkey" PRIMARY KEY ("id")
@@ -56,8 +55,6 @@ CREATE TABLE "Category" (
 -- CreateTable
 CREATE TABLE "Post" (
     "id" SERIAL NOT NULL,
-    "title" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
     "categoryId" INTEGER NOT NULL,
     "authorId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -71,13 +68,31 @@ CREATE TABLE "Post" (
 CREATE TABLE "PostHistory" (
     "id" SERIAL NOT NULL,
     "postId" INTEGER NOT NULL,
-    "title" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
     "categoryId" INTEGER NOT NULL,
     "authorId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PostHistory_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PostTranslation" (
+    "postId" INTEGER NOT NULL,
+    "language" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+
+    CONSTRAINT "PostTranslation_pkey" PRIMARY KEY ("postId","language")
+);
+
+-- CreateTable
+CREATE TABLE "PostHistoryTranslation" (
+    "postHistoryId" INTEGER NOT NULL,
+    "language" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+
+    CONSTRAINT "PostHistoryTranslation_pkey" PRIMARY KEY ("postHistoryId","language")
 );
 
 -- CreateTable
@@ -216,6 +231,12 @@ ALTER TABLE "PostHistory" ADD CONSTRAINT "PostHistory_categoryId_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "PostHistory" ADD CONSTRAINT "PostHistory_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PostTranslation" ADD CONSTRAINT "PostTranslation_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PostHistoryTranslation" ADD CONSTRAINT "PostHistoryTranslation_postHistoryId_fkey" FOREIGN KEY ("postHistoryId") REFERENCES "PostHistory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Course" ADD CONSTRAINT "Course_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
