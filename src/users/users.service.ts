@@ -141,7 +141,7 @@ export class UsersService {
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: true, // Only use HTTPS in production
-      sameSite: 'none', // CSRF protection
+      sameSite: 'lax', // CSRF protection
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/'
     });
