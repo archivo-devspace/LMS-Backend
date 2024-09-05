@@ -138,11 +138,11 @@ export class UsersService {
     tokens: { accessToken: string; refreshToken: string },
     res: Response,
   ) {
-    res.cookie('refreshToken', tokens.refreshToken, {
+    res.cookie('USER_REFRESH_TOKEN', tokens.refreshToken, {
       httpOnly: true,
       secure: true, // Only use HTTPS in production
       sameSite: 'lax', // CSRF protection
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/'
     });
 
