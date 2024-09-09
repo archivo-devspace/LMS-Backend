@@ -48,7 +48,7 @@ async function bootstrap() {
   });
 
   try {
-    await app.listen(3000);
+    await app.listen(3002);
     console.log('Connection established');
   } catch (error) {
     console.log('Connection failed', error);
