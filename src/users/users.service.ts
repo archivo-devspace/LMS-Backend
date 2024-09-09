@@ -138,15 +138,7 @@ export class UsersService {
     tokens: { accessToken: string; refreshToken: string },
     res: Response,
   ) {
-    res.cookie('USER_REFRESH_TOKEN', tokens.refreshToken, {
-      httpOnly: true,
-      secure: true, // Only use HTTPS in production
-      sameSite: 'lax', // CSRF protection
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/'
-    });
-
-    res.json({ accessToken: tokens.accessToken });
+    res.json({ accessToken: tokens.accessToken , refreshToken: tokens.refreshToken });
   }
 
   async findUserById(id: number): Promise<UserProfileDto> {
